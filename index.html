@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Bot - الذكاء الاصطناعي</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#0a0e17;font-family:'Segoe UI',system-ui,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;color:#e8edf5;padding:16px}
+        .container{background:#111827;padding:2rem;border-radius:2rem;box-shadow:0 25px 50px rgba(0,0,0,0.8);width:100%;max-width:820px;border:1px solid #1f2937}
+        .header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1f2937;padding-bottom:0.75rem;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px}
+        .header h1{font-size:1.6rem;background:linear-gradient(135deg,#34d399,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .header .badge{background:#1f2937;padding:0.2rem 1rem;border-radius:999px;font-size:0.7rem;color:#9ca3af;border:1px solid #2a3440}
+        .header .badge.green{border-color:#059669;color:#34d399}
+        .header .badge.orange{border-color:#f59e0b;color:#fbbf24}
+        .chat-box{background:#0d1520;border-radius:1.2rem;padding:1.2rem;height:400px;overflow-y:auto;margin-bottom:1rem;border:1px solid #1f2937;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+        .msg{padding:0.7rem 1.2rem;border-radius:1.2rem;max-width:88%;word-wrap:break-word;font-size:0.95rem;line-height:1.6;animation:fadeIn 0.25s ease}
+        .user-msg{background:#1f7b9e;align-self:flex-end;color:#fff;border-bottom-right-radius:0.2rem}
+        .ai-msg{background:#1a2332;align-self:flex-start;color:#d6e5f5;border-bottom-left-radius:0.2rem;border:1px solid #2a3440}
+        .ai-msg.error{background:#2a1414;border-color:#6b2a2a;color:#ff6b6b}
+        .typing-msg{background:#1a2332;align-self:flex-start;color:#6a88a8;padding:0.6rem 1.2rem;border-radius:1.2rem;font-size:0.9rem;border:1px solid #2a3440}
+        .typing-msg .dots{display:inline-flex;gap:4px;margin-right:6px}
+        .typing-msg .dots span{width:6px;height:6px;border-radius:50%;background:#6a88a8;animation:blink 1.4s infinite}
+        .typing-msg .dots span:nth-child(2){animation-delay:0.2s}
+        .typing-msg .dots span:nth-child(3){animation-delay:0.4s}
+        @keyframes blink{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .input-area{display:flex;gap:10px;flex-wrap:wrap}
+        .input-area textarea{flex:1;padding:0.9rem 1.2rem;border-radius:1.2rem;border:1px solid #2a3440;background:#0d1520;color:#e8edf5;font-size:1rem;outline:none;resize:none;min-height:56px;max-height:150px;font-family:inherit;transition:border-color 0.2s}
+        .input-area textarea:focus{border-color:#34d399}
+        .input-area textarea::placeholder{color:#4b5563}
+        .input-area button{min-width:80px;padding:0.9rem 1.8rem;border:none;border-radius:1.2rem;background:#059669;color:#fff;font-weight:700;font-size:1rem;cursor:pointer;transition:background 0.2s,transform 0.1s}
+        .input-area button:hover{background:#10b981}
+        .input-area button:active{transform:scale(0.97)}
+        .input-area button:disabled{background:#2a3440;cursor:not-allowed}
+        .footer{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:0.75rem;border-top:1px solid #1f2937;font-size:0.75rem;color:#4b5563;flex-wrap:wrap;gap:8px}
+        .footer .status{display:flex;align-items:center;gap:6px}
+        .footer .status .dot{width:7px;height:7px;border-radius:50%;background:#34d399;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+        .footer a{color:#34d399;text-decoration:none}
+        .footer a:hover{text-decoration:underline}
+        .clear-btn{background:transparent;border:1px solid #2a3440;color:#9ca3af;padding:0.3rem 0.8rem;border-radius:999px;font-size:0.7rem;cursor:pointer;transition:border-color 0.2s}
+        .clear-btn:hover{border-color:#6b7280;color:#d1d5db}
+        .api-setup{background:#1a2332;border:1px solid #f59e0b;border-radius:1rem;padding:1rem;margin-bottom:1rem;display:none}
+        .api-setup.show{display:block}
+        .api-setup label{display:block;font-size:0.8rem;color:#9ca3af;margin-bottom:4px}
+        .api-setup input{width:100%;padding:0.7rem 1rem;border-radius:0.8rem;border:1px solid #2a3440;background:#0d1520;color:#e8edf5;font-size:0.9rem;font-family:monospace}
+        .api-setup input:focus{border-color:#34d399;outline:none}
+        .api-setup .hint{font-size:0.7rem;color:#6b7280;margin-top:4px}
+        @media(max-width:600px){.container{padding:1rem}.header h1{font-size:1.2rem}.chat-box{height:320px}.input-area textarea{min-height:44px;font-size:0.9rem}}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <h1>⚡ Shadow Bot</h1>
+        <span class="badge orange">● أدخل المفتاح</span>
+    </div>
+
+    <!-- API KEY SETUP -->
+    <div class="api-setup show" id="apiSetup">
+        <label for="apiKeyInput">🔑 أدخل مفتاح Hugging Face API:</label>
+        <input type="password" id="apiKeyInput" placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autofocus>
+        <div class="hint">📌 المفتاح يُخزن محلياً في متصفحك فقط. لن يُرسل لأي خادم.</div>
+        <button id="saveKeyBtn" style="margin-top:10px;padding:0.5rem 1.5rem;border:none;border-radius:0.8rem;background:#059669;color:#fff;font-weight:600;cursor:pointer">✅ حفظ المفتاح</button>
+    </div>
+
+    <!-- CHAT BOX -->
+    <div class="chat-box" id="chatBox">
+        <div class="msg ai-msg">👋 مرحباً سيدي، أنا هنا لخدمتك. اكتب سؤالك.</div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+        <textarea id="userInput" placeholder="اكتب رسالتك هنا..." rows="1" disabled></textarea>
+        <button id="sendBtn" disabled>إرسال</button>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="status">
+            <span class="dot"></span>
+            <span>الظل المبرمج · وضع التنفيذ المطلق</span>
+        </div>
+        <div>
+            <button class="clear-btn" id="clearBtn">🗑 مسح</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ====== العناصر ======
+    const chatBox = document.getElementById('chatBox');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const apiSetup = document.getElementById('apiSetup');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+
+    let API_KEY = '';
+    let MODEL = 'microsoft/DialoGPT-medium';
+    let isReady = false;
+
+    // ====== تحميل المفتاح من localStorage ======
+    function loadKey() {
+        try {
+            const saved = localStorage.getItem('shadow_bot_api_key');
+            if (saved && saved.startsWith('hf_')) {
+                API_KEY = saved;
+                apiSetup.classList.remove('show');
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                document.querySelector('.header .badge').className = 'badge green';
+                document.querySelector('.header .badge').textContent = '● نشط';
+                appendMessage('🔑 تم تفعيل المفتاح! أنا جاهز لخدمتك.', 'ai');
+                isReady = true;
+                return true;
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    // ====== حفظ المفتاح ======
+    function saveKey() {
+        const key = apiKeyInput.value.trim();
+        if (!key.startsWith('hf_')) {
+            appendMessage('⚠️ المفتاح غير صحيح! يجب أن يبدأ بـ hf_', 'ai', true);
+            return;
+        }
+        try {
+            localStorage.setItem('shadow_bot_api_key', key);
+            API_KEY = key;
+            apiSetup.classList.remove('show');
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            document.querySelector('.header .badge').className = 'badge green';
+            document.querySelector('.header .badge').textContent = '● نشط';
+            appendMessage('✅ تم حفظ المفتاح بنجاح! أنا جاهز لخدمتك.', 'ai');
+            isReady = true;
+            apiKeyInput.value = '';
+            userInput.focus();
+        } catch (e) {
+            appendMessage('⚠️ فشل حفظ المفتاح: ' + e.message, 'ai', true);
+        }
+    }
+
+    // ====== دوال الواجهة ======
+    function appendMessage(text, sender, isError = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'msg ' + (sender === 'user' ? 'user-msg' : 'ai-msg');
+        if (isError) msgDiv.classList.add('error');
+        msgDiv.textContent = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'typing-msg';
+        div.id = 'typingIndicator';
+        div.innerHTML = '<span class="dots"><span></span><span></span><span></span></span> جاري التفكير...';
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return div;
+    }
+
+    function removeTyping() {
+        const el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+
+    // ====== الاتصال بـ Hugging Face ======
+    async function callHuggingFace(prompt) {
+        if (!API_KEY) {
+            return '⚠️ الرجاء إدخال مفتاح API أولاً.';
+        }
+
+        const proxy = 'https://corsproxy.io/?';
+        const url = proxy + encodeURIComponent(`https://api-inference.huggingface.co/models/${MODEL}`);
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    inputs: prompt,
+                    parameters: {
+                        max_length: 250,
+                        temperature: 0.85,
+                        top_p: 0.9,
+                        do_sample: true
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                if (response.status === 403) {
+                    return '⚠️ مفتاح API غير صالح أو منتهي الصلاحية.';
+                }
+                if (response.status === 429) {
+                    return '⚠️ تجاوزت حد الاستخدام. انتظر قليلاً ثم حاول مرة أخرى.';
+                }
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+                let generated = data[0]?.generated_text || data[0]?.text || '';
+                if (generated.startsWith(prompt)) {
+                    generated = generated.slice(prompt.length).trim();
+                }
+                return generated || 'لم أستطع توليد رد مناسب.';
+            }
+            return 'لم يتوقع النموذج استجابة مفهومة.';
+
+        } catch (err) {
+            console.error('HuggingFace error:', err);
+            return `⚠️ خطأ في الاتصال: ${err.message}`;
+        }
+    }
+
+    // ====== معالجة الرسالة ======
+    async function handleSend() {
+        if (!isReady || !API_KEY) {
+            appendMessage('⚠️ الرجاء إدخال مفتاح API أولاً.', 'ai', true);
+            apiSetup.classList.add('show');
+            apiKeyInput.focus();
+            return;
+        }
+
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        appendMessage(text, 'user');
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        sendBtn.disabled = true;
+
+        showTyping();
+        const reply = await callHuggingFace(text);
+        removeTyping();
+
+        const isError = reply.startsWith('⚠️');
+        appendMessage(reply, 'ai', isError);
+        sendBtn.disabled = false;
+        userInput.focus();
+    }
+
+    // ====== Auto-resize textarea ======
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+    });
+
+    // ====== Enter to send ======
+    userInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!sendBtn.disabled) handleSend();
+        }
+    });
+
+    // ====== أزرار ======
+    sendBtn.addEventListener('click', handleSend);
+    saveKeyBtn.addEventListener('click', saveKey);
+
+    apiKeyInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') saveKey();
+    });
+
+    clearBtn.addEventListener('click', function() {
+        chatBox.innerHTML = '';
+        appendMessage('👋 مرحباً سيدي، أنا هنا لخدمتك. اكتب سؤالك.', 'ai');
+        userInput.value = '';
+        userInput.style.height = 'auto';
+    });
+
+    // ====== تحميل المفتاح عند التشغيل ======
+    const hasKey = loadKey();
+    if (!hasKey) {
+        apiSetup.classList.add('show');
+        apiKeyInput.focus();
+        appendMessage('🔑 الرجاء إدخال مفتاح Hugging Face API للبدء.', 'ai');
+    }
+
+    console.log('🔐 Shadow Bot — API key stored locally only.');
+})();
+</script>
+
+</body>
+</html>
